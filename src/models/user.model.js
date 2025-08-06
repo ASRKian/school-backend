@@ -12,14 +12,14 @@ const userSchema = new Schema({
     userType: {
         type: String,
         enum: ["Admin", "Manager", "Student", "Account"],
-        required: [true, "Please Select member Type !"]
+        default: "Student",
     },
     fullName: {
         type: String,
         trim: true,
         required: [true, "Please Enter your Full Name !"]
     },
-    avater: {
+    avatar: {
         type: String,
         trim: true,
     },
@@ -41,7 +41,7 @@ const userSchema = new Schema({
     refreshToken: {
         type: String
     },
-    addresh: {
+    address: {
         country: {
             type: String,
             required: [true, "Please Enter Country"]
@@ -54,34 +54,14 @@ const userSchema = new Schema({
             type: String,
             required: [true, "Please Enter City !"]
         },
-        addresh: {
+        address: {
             type: String,
-            required: [true, "Please Enter Addresh !"]
+            required: [true, "Please Enter Address !"]
         },
         pincode: {
             type: Number,
-            required: [true, "Please Enter Pincode !"]
+            required: [true, "Please Enter Pin-code !"]
         },
-    },
-    minWalletBalance: {
-        type: Number,
-        required: [true, "Please Enter minimum Walllet Balance Hold !"]
-    },
-    upiWalletBalance: {
-        type: Number,
-        default: 0
-    },
-    EwalletBalance: {
-        type: Number,
-        default: 0
-    },
-    EwalletFundLock: {
-        type: Number,
-        default: 0
-    },
-    HoldingAmount: {
-        type: Number,
-        default: 0
     },
     isActive: {
         type: Boolean,
@@ -117,4 +97,5 @@ userSchema.methods.generateRefreshToken = function () {
     )
 }
 
-export default new model("user", userSchema);
+const User = new model("user", userSchema, "users");
+export default User;

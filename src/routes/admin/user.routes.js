@@ -1,10 +1,10 @@
 import express from "express";
-import { getUser, addUser, registerUser, loginUser, logOut, getSingleUser, updateUser, authTokenReVerify } from "../../controllers/admin/user.controller.js";
+import { getUsers, addUser, registerUser, loginUser, logOut, getSingleUser, updateUser, authTokenReVerify } from "../../controllers/admin/user.controller.js";
 import { celebrate, Joi } from "celebrate";
 import { userVerify, userAuthAdmin } from "../../middlewares/userAuth.js";
 const router = express.Router();
 
-router.get("/getUsers", userVerify, getUser);
+router.get("/getUsers", userVerify, getUsers);
 
 router.get("/userProfile/:id", celebrate({
     params: Joi.object({
@@ -14,23 +14,20 @@ router.get("/userProfile/:id", celebrate({
 
 router.post("/addUser", celebrate({
     body: Joi.object({
-        memberType: Joi.string().valid("Admin", "Manager", "Users", "Retailer", "TeamMember").required(),
+        userName: Joi.string().required(),
         fullName: Joi.string().required(),
+        avatar: Joi.string().optional(),
         email: Joi.string().required(),
         mobileNumber: Joi.string().required(),
-        payInApi: Joi.string().optional(),
-        payOutApi: Joi.string().optional(),
-        package: Joi.string().optional(),
-        addresh: Joi.object({
+        password: Joi.string().required(),
+        userType: Joi.string().valid("Admin", "Manager", "Student", "Account").required(),
+        address: Joi.object({
             country: Joi.string().required(),
             state: Joi.string().required(),
             city: Joi.string().required(),
-            addresh: Joi.string().required(),
+            address: Joi.string().required(),
             pincode: Joi.number().required()
         }),
-        minWalletBalance: Joi.number().required(),
-        EwalletFundLock: Joi.number().required(),
-        isActive: Joi.boolean().required(),
     })
 }), userVerify, addUser)
 
@@ -40,20 +37,14 @@ router.post("/updateUser/:id", [celebrate({
         fullName: Joi.string().optional(),
         email: Joi.string().optional(),
         mobileNumber: Joi.string().optional(),
-        payInApi: Joi.string().optional(),
-        payOutApi: Joi.string().optional(),
         package: Joi.string().optional(),
-        addresh: Joi.object({
+        address: Joi.object({
             country: Joi.string().optional(),
             state: Joi.string().optional(),
             city: Joi.string().optional(),
-            addresh: Joi.string().optional()
+            address: Joi.string().optional(),
+            pincode: Joi.number().required()
         }),
-        minWalletBalance: Joi.number().optional(),
-        upiWalletBalance: Joi.number().optional(),
-        EwalletBalance: Joi.number().optional(),
-        HoldingAmount: Joi.number().optional(),
-        EwalletFundLock: Joi.number().optional(),
         isActive: Joi.boolean().optional(),
     }),
     params: Joi.object({
@@ -63,9 +54,10 @@ router.post("/updateUser/:id", [celebrate({
 
 router.post("/login", celebrate({
     body: Joi.object({
-        username: Joi.string().required(),
+        userName: Joi.string(),
+        email: Joi.string().email(),
         password: Joi.string().required(),
-    })
+    }).or("username", "email")
 }), loginUser)
 
 router.get("/authTokenReVerify", authTokenReVerify)
@@ -73,24 +65,18 @@ router.get("/authTokenReVerify", authTokenReVerify)
 router.post("/register", celebrate({
     body: Joi.object({
         userName: Joi.string().required(),
-        memberId: Joi.string().required(),
-        memberType: Joi.string().required(),
         fullName: Joi.string().required(),
+        avatar: Joi.string().optional(),
         email: Joi.string().required(),
         mobileNumber: Joi.string().required(),
         password: Joi.string().required(),
-        trxPassword: Joi.string().required(),
-        addresh: Joi.string().required(),
-        package: Joi.object({
-            country: Joi.string().required(),
-            state: Joi.string().required(),
-            city: Joi.string().required(),
-            addresh: Joi.string().required()
-        }),
-        minWalletBalance: Joi.number().required(),
-        upiWalletBalance: Joi.number().required(),
-        EwalletBalance: Joi.number().required(),
-        isActive: Joi.boolean().required(),
+        address: Joi.object({
+            country: Joi.string().optional(),
+            state: Joi.string().optional(),
+            city: Joi.string().optional(),
+            address: Joi.string().optional(),
+            pincode: Joi.number().required()
+        }).required(),
     })
 }), registerUser)
 
