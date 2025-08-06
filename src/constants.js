@@ -1,1 +1,1 @@
-export const DB_Name = "MarwarPayDataBase";
+export const DB_Name = "RanaBhaiSchool";
