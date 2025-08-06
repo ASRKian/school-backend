@@ -3,16 +3,24 @@ import User from "../../models/user.model.js"
 import bcrypt from "bcrypt"
 import { asyncHandler } from "../../utils/asyncHandler.js"
 import { ApiError } from "../../utils/ApiError.js"
+import { appendRandomChars } from "../../utils/AppendRandomChars.js"
+import jwt from 'jsonwebtoken'
+import { flattenNestedObject } from "../../utils/flattenNestedObject.js"
+import UserRegInfo from "../../models/user.regInfo.js"
+import mongoose from "mongoose"
 
-const generateAccessAndRefreshTokens = async (userId) => {
+const generateAccessAndRefreshTokens = async (uniqueId, type) => {
     try {
-        const user = await User.findById(userId)
-        const accessToken = user.generateAccessToken()
-        const refreshToken = user.generateRefreshToken()
+        const accessToken = jwt.sign(
+            { uniqueId, role: type, },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: process.env.ACCESS_TOKEN_EXPIRY })
 
-        user.refreshToken = refreshToken
-        await user.save({ validateBeforeSave: false })
-
+        const refreshToken = jwt.sign(
+            { uniqueId },
+            process.env.REFRESH_TOKEN_SECRET,
+            { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
+        )
         return { accessToken, refreshToken }
 
     } catch (error) {
@@ -21,27 +29,24 @@ const generateAccessAndRefreshTokens = async (userId) => {
 }
 
 export const getUsers = asyncHandler(async (req, res) => {
-    try {
-        const users = await User.find().select("-password -refreshToken").lean() || [];
-        return res.status(200).json(new ApiResponse({ statusCode: 200, data: users, message: "Users fetched successfully" }));
-    } catch (error) {
-        return res.status(500).json(new ApiError({ statusCode: 500, error: "Internal server error" }))
+    const type = req.query.type;
+    if (!["Admin", "Teacher", "Student"].includes(type)) {
+        return res.status(404).json(new ApiError({ statusCode: 404, error: "available types: ['Admin', 'Teacher', 'Student'] " }));
     }
+    const users = await User.find({ role: type }).select("-password").lean() || [];
+    return res.status(200).json(new ApiResponse({ statusCode: 200, data: users, message: "Users fetched successfully" }));
+
 });
 
 export const getSingleUser = asyncHandler(async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const user = await User.findById(userId).select("-password -refreshToken").lean();
+    const userId = req.params.id;
+    const user = await User.findById(userId).select("-password -refreshToken -createdAt -updatedAt -__v").lean();
 
-        if (!user) {
-            return res.status(404).json(new ApiError({ statusCode: 404, error: "User not found" }));
-        }
-
-        return res.status(200).json(new ApiResponse({ statusCode: 200, data: user, message: "User fetched successfully" }));
-    } catch (error) {
-        return res.status(500).json(new ApiError({ statusCode: 500, error: "Internal server error" }))
+    if (!user) {
+        return res.status(404).json(new ApiError({ statusCode: 404, error: "User not found" }));
     }
+
+    return res.status(200).json(new ApiResponse({ statusCode: 200, data: user, message: "User fetched successfully" }));
 });
 
 export const addUser = asyncHandler(async (req, res) => {
@@ -49,14 +54,17 @@ export const addUser = asyncHandler(async (req, res) => {
 
     return res.status(201).json(new ApiResponse({
         statusCode: 201,
-        message: "User added successfully by admin"
+        message: "User added successfully"
     }));
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
     try {
         let id = req.params.id
-        await User.findByIdAndUpdate(id, req.body, { new: true });
+        await User.findByIdAndUpdate(id, {
+            $set: flattenNestedObject(req.body)
+        }, { new: true });
+
         return res.status(200).json(new ApiResponse({ statusCode: 200, message: "User updated successfully" }));
     } catch (error) {
         return res.status(500).json(new ApiError({ statusCode: 500, error: "Internal server error" }))
@@ -64,44 +72,43 @@ export const updateUser = asyncHandler(async (req, res) => {
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
-    try {
-        const { userName, email, password } = req.body;
-        const user = await User.findOne({ $or: [{ userName }, { email }] });
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
-        if (!user) {
-            return res.status(401).json(new ApiError({ statusCode: 401, error: "Invalid credentials" }));
-        }
-
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
-            return res.status(401).json(new ApiError({ statusCode: 401, error: "Invalid credentials" }));
-        }
-
-        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-
-        user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });
-
-        const options = {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: process.env.REFRESH_TOKEN_EXPIRY
-        };
-
-        user.password = undefined;
-        user.refreshToken = undefined;
-        user.isActive = undefined;
-
-
-        res
-            .cookie("refreshToken", refreshToken, options)
-            .status(200)
-            .json(new ApiResponse({ statusCode: 200, data: user, token: accessToken, message: "User logged in successfully" }));
-
-    } catch (error) {
-        return res.status(500).json(new ApiError({ error: "Internal server error", statusCode: 500 }))
+    if (!user) {
+        return res.status(401).json(new ApiError({ statusCode: 401, error: "Invalid credentials" }));
     }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+        return res.status(401).json(new ApiError({ statusCode: 401, error: "Invalid credentials" }));
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user.uniqueId, user.role);
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        maxAge: process.env.REFRESH_TOKEN_EXPIRY.replace("d", "") * 24 * 60 * 60 * 1000 // Convert days to milliseconds
+    };
+
+    user.password = undefined;
+    user.refreshToken = undefined;
+    user.isActive = undefined;
+    user.__v = undefined;
+    user.createdAt = undefined;
+    user.updatedAt = undefined;
+
+
+    res
+        .cookie("refreshToken", refreshToken, options)
+        .status(200)
+        .json(new ApiResponse({ statusCode: 200, data: user, token: accessToken, message: "User logged in successfully" }));
+
 });
 
 export const authTokenReVerify = asyncHandler(async (req, res) => {
@@ -112,63 +119,61 @@ export const authTokenReVerify = asyncHandler(async (req, res) => {
 });
 
 export const registerUser = asyncHandler(async (req, res) => {
-    const { newUser, token, refreshToken } = await createUser(req.body, true);
+    const { newUser, accessToken, refreshToken } = await createUser(req.body, true);
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: "strict",
-        maxAge: process.env.REFRESH_TOKEN_EXPIRY
+        maxAge: process.env.REFRESH_TOKEN_EXPIRY.replace("d", "") * 24 * 60 * 60 * 1000 // Convert days to milliseconds
     });
 
     return res.status(201).json(new ApiResponse({
         statusCode: 201,
         message: "User registered successfully",
-        token
+        token: accessToken
     }));
 });
 
-const createUser = async ({ userName, fullName, avatar, email, mobileNumber, password, address }, generateTokens = false) => {
-    const isExistingUser = await User.findOne({
-        $or: [{ mobileNumber }, { email }, { userName }]
-    });
 
-    if (isExistingUser) {
-        if (isExistingUser.mobileNumber === mobileNumber) {
-            throw new ApiError({ statusCode: 400, error: "Mobile number already registered, please login!" });
+const createUser = async (
+    { fullName, avatar, email, mobileNumber, password, address, gender, dob, pincode, fatherName, motherName, fatherNo, motherNo, panCard, aadharCard, batch, course, amountDue, amountPaid, regNo },
+    generateTokens = false
+) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const uniqueId = appendRandomChars(fullName);
+
+        let accessToken = null;
+        let refreshToken = null;
+
+        if (generateTokens) {
+            const tokens = await generateAccessAndRefreshTokens({ uniqueId, type: "Student" });
+            accessToken = tokens.accessToken;
+            refreshToken = tokens.refreshToken;
         }
-        if (isExistingUser.email === email) {
-            throw new ApiError({ statusCode: 400, error: "Email already registered, please login!" });
-        }
-        if (isExistingUser.userName === userName) {
-            throw new ApiError({ statusCode: 400, error: "Username already taken" });
-        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await UserRegInfo.create(
+            [{ address, pincode, fatherName, motherName, fatherNo, motherNo, panCard, aadharCard, uniqueId }],
+            { session }
+        );
+
+        const [newUser] = await User.create([{ uniqueId, fullName, avatar, email, mobileNumber, password: hashedPassword, gender, batch, course, amountPaid, amountDue, dob, regNo }],
+            { session });
+
+        await session.commitTransaction();
+
+        return { newUser, accessToken, refreshToken };
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new User({
-        userName,
-        fullName,
-        avatar,
-        email,
-        mobileNumber,
-        password: hashedPassword,
-        address
-    });
-
-    let token = null;
-    let refreshToken = null;
-
-    if (generateTokens) {
-        token = newUser.generateAccessToken();
-        refreshToken = newUser.generateRefreshToken();
-        newUser.refreshToken = refreshToken;
-    }
-
-    await newUser.save();
-
-    return { newUser, token, refreshToken };
 };
 
 export const logOut = asyncHandler(async (req, res) => {

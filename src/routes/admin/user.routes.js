@@ -4,48 +4,65 @@ import { celebrate, Joi } from "celebrate";
 import { userVerify, userAuthAdmin } from "../../middlewares/userAuth.js";
 const router = express.Router();
 
-router.get("/getUsers", userVerify, getUsers);
+router.get("/", userVerify, userAuthAdmin, getUsers);
 
-router.get("/userProfile/:id", celebrate({
+router.get("/:id", celebrate({
     params: Joi.object({
         id: Joi.string().trim().length(24).required(),
     })
-}), userVerify, getSingleUser);
+}), userVerify, userAuthAdmin, getSingleUser);
 
-router.post("/addUser", celebrate({
+router.post("/", celebrate({
     body: Joi.object({
-        userName: Joi.string().required(),
         fullName: Joi.string().required(),
-        avatar: Joi.string().optional(),
+        avatar: Joi.string().required(),
         email: Joi.string().required(),
         mobileNumber: Joi.string().required(),
         password: Joi.string().required(),
-        userType: Joi.string().valid("Admin", "Manager", "Student", "Account").required(),
-        address: Joi.object({
-            country: Joi.string().required(),
-            state: Joi.string().required(),
-            city: Joi.string().required(),
-            address: Joi.string().required(),
-            pincode: Joi.number().required()
-        }),
+        address: Joi.string().required(),
+        gender: Joi.string().valid("MALE", "FEMALE", "OTHER").required(),
+        dob: Joi.date().required(),
+        batch: Joi.string().optional(),
+        course: Joi.string().optional(),
+        pincode: Joi.number().required(),
+        fatherName: Joi.string().required(),
+        regNo: Joi.string().required(),
+        motherName: Joi.string().required(),
+        fatherNo: Joi.string().required(),
+        motherNo: Joi.string().optional(),
+        panCard: Joi.string().optional(),
+        aadharCard: Joi.string().required(),
+        amountDue: Joi.number().default(0),
+        amountPaid: Joi.number().optional(),
+        amountDue: Joi.number().optional(),
+        role: Joi.string().valid("Admin", "Teacher", "Student").default("Student")
     })
-}), userVerify, addUser)
+}), userVerify, userAuthAdmin, addUser)
 
-router.post("/updateUser/:id", [celebrate({
+router.put("/:id", [celebrate({
     body: Joi.object({
-        memberType: Joi.string().valid("Admin", "Manager", "Users").optional(),
         fullName: Joi.string().optional(),
+        avatar: Joi.string().optional(),
         email: Joi.string().optional(),
         mobileNumber: Joi.string().optional(),
-        package: Joi.string().optional(),
-        address: Joi.object({
-            country: Joi.string().optional(),
-            state: Joi.string().optional(),
-            city: Joi.string().optional(),
-            address: Joi.string().optional(),
-            pincode: Joi.number().required()
-        }),
-        isActive: Joi.boolean().optional(),
+        password: Joi.string().optional(),
+        address: Joi.string().optional(),
+        gender: Joi.string().valid("MALE", "FEMALE", "OTHER").optional(),
+        dob: Joi.date().optional(),
+        batch: Joi.string().optional(),
+        course: Joi.string().optional(),
+        pincode: Joi.number().optional(),
+        fatherName: Joi.string().optional(),
+        motherName: Joi.string().optional(),
+        fatherNo: Joi.string().optional(),
+        motherNo: Joi.string().optional(),
+        panCard: Joi.string().optional(),
+        aadharCard: Joi.string().optional(),
+        amountDue: Joi.number().default(0),
+        regNo: Joi.string().optional(),
+        amountPaid: Joi.number().optional(),
+        amountDue: Joi.number().optional(),
+        role: Joi.string().valid("Admin", "Teacher", "Student").default("Student")
     }),
     params: Joi.object({
         id: Joi.string().trim().length(24).required(),
@@ -54,31 +71,40 @@ router.post("/updateUser/:id", [celebrate({
 
 router.post("/login", celebrate({
     body: Joi.object({
-        userName: Joi.string(),
+        uniqueId: Joi.string(),
         email: Joi.string().email(),
         password: Joi.string().required(),
-    }).or("username", "email")
+    }).or("uniqueId", "email")
 }), loginUser)
 
 router.get("/authTokenReVerify", authTokenReVerify)
 
 router.post("/register", celebrate({
     body: Joi.object({
-        userName: Joi.string().required(),
         fullName: Joi.string().required(),
-        avatar: Joi.string().optional(),
+        avatar: Joi.string().required(),
         email: Joi.string().required(),
         mobileNumber: Joi.string().required(),
         password: Joi.string().required(),
-        address: Joi.object({
-            country: Joi.string().optional(),
-            state: Joi.string().optional(),
-            city: Joi.string().optional(),
-            address: Joi.string().optional(),
-            pincode: Joi.number().required()
-        }).required(),
+        address: Joi.string().required(),
+        gender: Joi.string().valid("MALE", "FEMALE", "OTHER").required(),
+        dob: Joi.date().required(),
+        batch: Joi.string().optional(),
+        course: Joi.string().optional(),
+        pincode: Joi.number().required(),
+        fatherName: Joi.string().required(),
+        motherName: Joi.string().required(),
+        fatherNo: Joi.string().required(),
+        motherNo: Joi.string().optional(),
+        panCard: Joi.string().optional(),
+        aadharCard: Joi.string().required(),
+        amountDue: Joi.number().default(0),
+        regNo: Joi.string().required(),
+        amountPaid: Joi.number().optional(),
+        amountDue: Joi.number().optional(),
+        role: Joi.string().valid("Admin", "Teacher", "Student").default("Student")
     })
-}), registerUser)
+}), userVerify, userAuthAdmin, registerUser)
 
 router.get("/logout", logOut)
 

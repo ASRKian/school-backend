@@ -1,17 +1,16 @@
 import { Schema, model } from "mongoose";
-import jwt from "jsonwebtoken";
 
 const userSchema = new Schema({
-    userName: {
+    uniqueId: {
         type: String,
         unique: true,
         trim: true,
         index: true,
-        required: [true, "Please Enter username !"]
+        required: [true, "Please Enter uniqueId !"]
     },
-    userType: {
+    role: {
         type: String,
-        enum: ["Admin", "Manager", "Student", "Account"],
+        enum: ["Admin", "Teacher", "Student"],
         default: "Student",
     },
     fullName: {
@@ -25,77 +24,57 @@ const userSchema = new Schema({
     },
     email: {
         type: String,
-        lowecase: true,
+        lowercase: true,
         trim: true,
         unique: true,
         required: [true, "Please Enter your email id !"]
     },
     mobileNumber: {
         type: String,
-        required: [true, "Please Enter your Mobile Number !"]
+        required: [true, "Please Enter your Mobile Number !"],
+        unique: true
     },
     password: {
         type: String,
         required: [true, "Please Enter your Password !"]
     },
-    refreshToken: {
-        type: String
-    },
-    address: {
-        country: {
-            type: String,
-            required: [true, "Please Enter Country"]
-        },
-        state: {
-            type: String,
-            required: [true, "Please Enter State"]
-        },
-        city: {
-            type: String,
-            required: [true, "Please Enter City !"]
-        },
-        address: {
-            type: String,
-            required: [true, "Please Enter Address !"]
-        },
-        pincode: {
-            type: Number,
-            required: [true, "Please Enter Pin-code !"]
-        },
+    regNo: {
+        type: String,
+        unique: true,
+        required: [true, "Please Enter your Registration Number !"]
     },
     isActive: {
         type: Boolean,
         default: true
     },
+    dob: {
+        type: Date,
+        required: [true, "Please Enter your Date of Birth !"]
+    },
+    amountPaid: {
+        type: Number,
+        default: 0
+    },
+    amountDue: {
+        type: Number,
+        default: 0
+    },
+    gender: {
+        type: String,
+        enum: ["MALE", "FEMALE", "OTHER"],
+        required: [true, "Please Enter gender !"]
+    },
+    batch: {
+        type: String,
+        ref: "batch",
+        // required: [true, "Please Enter Batch !"]
+    },
+    course: {
+        type: String,
+        ref: "course",
+        // required: [true, "Please Enter Course !"]
+    }
 }, { timestamps: true });
-
-userSchema.methods.generateAccessToken = function () {
-    return jwt.sign(
-        {
-            _id: this._id,
-            userName: this.userName,
-            memberId: this.memberId,
-            memberType: this.memberType
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
-        }
-    )
-}
-
-userSchema.methods.generateRefreshToken = function () {
-    return jwt.sign(
-        {
-            _id: this._id,
-
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
-        }
-    )
-}
 
 const User = new model("user", userSchema, "users");
 export default User;
