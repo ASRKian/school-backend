@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken'
 import { flattenNestedObject } from "../../utils/flattenNestedObject.js"
 import UserRegInfo from "../../models/user.regInfo.js"
 import mongoose from "mongoose"
+import { userRequest, userResponse } from "../../utils/userDto.js"
 
 const generateAccessAndRefreshTokens = async (uniqueId, type) => {
     try {
@@ -30,17 +31,17 @@ const generateAccessAndRefreshTokens = async (uniqueId, type) => {
 
 export const getUsers = asyncHandler(async (req, res) => {
     const type = req.query.type;
-    if (!["Admin", "Teacher", "Student"].includes(type)) {
-        return res.status(404).json(new ApiError({ statusCode: 404, error: "available types: ['Admin', 'Teacher', 'Student'] " }));
+    if (!["ADMIN", "TEACHER", "STUDENT"].includes(type)) {
+        return res.status(404).json(new ApiError({ statusCode: 404, error: "available types: ['ADMIN', 'TEACHER', 'STUDENT'] " }));
     }
-    const users = await User.find({ role: type }).select("-password").lean() || [];
+    const users = await User.find({ role: type }).select("-password -__v -updatedAt").lean() || [];
     return res.status(200).json(new ApiResponse({ statusCode: 200, data: users, message: "Users fetched successfully" }));
 
 });
 
 export const getSingleUser = asyncHandler(async (req, res) => {
     const userId = req.params.id;
-    const user = await User.findById(userId).select("-password -refreshToken -createdAt -updatedAt -__v").lean();
+    const user = await User.findById(userId).select("-password -updatedAt -__v").lean();
 
     if (!user) {
         return res.status(404).json(new ApiError({ statusCode: 404, error: "User not found" }));
@@ -96,18 +97,12 @@ export const loginUser = asyncHandler(async (req, res) => {
         maxAge: process.env.REFRESH_TOKEN_EXPIRY.replace("d", "") * 24 * 60 * 60 * 1000 // Convert days to milliseconds
     };
 
-    user.password = undefined;
-    user.refreshToken = undefined;
-    user.isActive = undefined;
-    user.__v = undefined;
-    user.createdAt = undefined;
-    user.updatedAt = undefined;
-
+    const responseData = userResponse(user);
 
     res
         .cookie("refreshToken", refreshToken, options)
         .status(200)
-        .json(new ApiResponse({ statusCode: 200, data: user, token: accessToken, message: "User logged in successfully" }));
+        .json(new ApiResponse({ statusCode: 200, data: responseData, token: accessToken, message: "User logged in successfully" }));
 
 });
 
@@ -136,38 +131,34 @@ export const registerUser = asyncHandler(async (req, res) => {
 });
 
 
-const createUser = async (
-    { fullName, avatar, email, mobileNumber, password, address, gender, dob, pincode, fatherName, motherName, fatherNo, motherNo, panCard, aadharCard, batch, course, amountDue, amountPaid, regNo },
-    generateTokens = false
-) => {
+const createUser = async (data, generateTokens = false) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const uniqueId = appendRandomChars(fullName);
+        let { requestUser, requestUserReg } = userRequest(data);
 
         let accessToken = null;
         let refreshToken = null;
 
         if (generateTokens) {
-            const tokens = await generateAccessAndRefreshTokens({ uniqueId, type: "Student" });
+            const tokens = await generateAccessAndRefreshTokens({ uniqueId: requestUser.uniqueId, type: "STUDENT" });
             accessToken = tokens.accessToken;
             refreshToken = tokens.refreshToken;
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(requestUser.password, 10);
+        requestUser.password = hashedPassword;
 
-        await UserRegInfo.create(
-            [{ address, pincode, fatherName, motherName, fatherNo, motherNo, panCard, aadharCard, uniqueId }],
-            { session }
-        );
+        await UserRegInfo.create([requestUserReg], { session });
 
-        const [newUser] = await User.create([{ uniqueId, fullName, avatar, email, mobileNumber, password: hashedPassword, gender, batch, course, amountPaid, amountDue, dob, regNo }],
-            { session });
+        const [newUser] = await User.create([requestUser], { session });
 
         await session.commitTransaction();
 
-        return { newUser, accessToken, refreshToken };
+        const responseData = userResponse(newUser);
+
+        return { responseData, accessToken, refreshToken };
     } catch (error) {
         await session.abortTransaction();
         throw error;

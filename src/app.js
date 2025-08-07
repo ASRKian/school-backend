@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
 app.use(express.static("public"));
 
-// Admin panel routes
+// ADMIN panel routes
 app.use("/apiAdmin/v1/user/", userRoutes);
 
 // Catch-all for undefined routes

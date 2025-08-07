@@ -10,8 +10,8 @@ const userSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ["Admin", "Teacher", "Student"],
-        default: "Student",
+        enum: ["ADMIN", "TEACHER", "STUDENT"],
+        default: "STUDENT",
     },
     fullName: {
         type: String,
@@ -32,20 +32,14 @@ const userSchema = new Schema({
     mobileNumber: {
         type: String,
         required: [true, "Please Enter your Mobile Number !"],
-        unique: true
     },
     password: {
         type: String,
         required: [true, "Please Enter your Password !"]
     },
-    regNo: {
+    status: {
         type: String,
-        unique: true,
-        required: [true, "Please Enter your Registration Number !"]
-    },
-    isActive: {
-        type: Boolean,
-        default: true
+        enum: ["UNPAID", "PAID", "INACTIVE", "ACTIVE"]
     },
     dob: {
         type: Date,
@@ -53,11 +47,9 @@ const userSchema = new Schema({
     },
     amountPaid: {
         type: Number,
-        default: 0
     },
     amountDue: {
         type: Number,
-        default: 0
     },
     gender: {
         type: String,
@@ -66,13 +58,21 @@ const userSchema = new Schema({
     },
     batch: {
         type: String,
-        ref: "batch",
         // required: [true, "Please Enter Batch !"]
     },
     course: {
         type: String,
-        ref: "course",
         // required: [true, "Please Enter Course !"]
+    },
+    standard: {
+        type: String,
+    },
+    subjects: {
+        type: [String],
+        default: undefined
+    },
+    qualification: {
+        type: String
     }
 }, { timestamps: true });
 

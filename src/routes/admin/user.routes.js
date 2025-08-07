@@ -25,17 +25,20 @@ router.post("/", celebrate({
         batch: Joi.string().optional(),
         course: Joi.string().optional(),
         pincode: Joi.number().required(),
-        fatherName: Joi.string().required(),
-        regNo: Joi.string().required(),
-        motherName: Joi.string().required(),
-        fatherNo: Joi.string().required(),
+        fatherName: Joi.string().optional(),
+        motherName: Joi.string().optional(),
+        fatherNo: Joi.string().optional(),
         motherNo: Joi.string().optional(),
         panCard: Joi.string().optional(),
-        aadharCard: Joi.string().required(),
+        aadharCard: Joi.string().optional(),
         amountDue: Joi.number().default(0),
         amountPaid: Joi.number().optional(),
         amountDue: Joi.number().optional(),
-        role: Joi.string().valid("Admin", "Teacher", "Student").default("Student")
+        role: Joi.string().valid("ADMIN", "TEACHER", "STUDENT").default("STUDENT"),
+        status: Joi.string().valid("UNPAID", "PAID", "INACTIVE", "ACTIVE"),
+        standard: Joi.string().optional(),
+        subjects: Joi.array().items(Joi.string()).optional(),
+        qualification: Joi.string().optional()
     })
 }), userVerify, userAuthAdmin, addUser)
 
@@ -59,10 +62,13 @@ router.put("/:id", [celebrate({
         panCard: Joi.string().optional(),
         aadharCard: Joi.string().optional(),
         amountDue: Joi.number().default(0),
-        regNo: Joi.string().optional(),
         amountPaid: Joi.number().optional(),
         amountDue: Joi.number().optional(),
-        role: Joi.string().valid("Admin", "Teacher", "Student").default("Student")
+        role: Joi.string().valid("ADMIN", "TEACHER", "STUDENT").default("STUDENT"),
+        status: Joi.string().valid("UNPAID", "PAID", "INACTIVE", "ACTIVE").optional(),
+        standard: Joi.string().optional(),
+        subjects: Joi.array().items(Joi.string()).optional(),
+        qualification: Joi.string().optional()
     }),
     params: Joi.object({
         id: Joi.string().trim().length(24).required(),
@@ -92,17 +98,20 @@ router.post("/register", celebrate({
         batch: Joi.string().optional(),
         course: Joi.string().optional(),
         pincode: Joi.number().required(),
-        fatherName: Joi.string().required(),
-        motherName: Joi.string().required(),
-        fatherNo: Joi.string().required(),
+        fatherName: Joi.string().optional(),
+        motherName: Joi.string().optional(),
+        fatherNo: Joi.string().optional(),
         motherNo: Joi.string().optional(),
         panCard: Joi.string().optional(),
         aadharCard: Joi.string().required(),
         amountDue: Joi.number().default(0),
-        regNo: Joi.string().required(),
         amountPaid: Joi.number().optional(),
         amountDue: Joi.number().optional(),
-        role: Joi.string().valid("Admin", "Teacher", "Student").default("Student")
+        role: Joi.string().valid("ADMIN", "TEACHER", "STUDENT").default("STUDENT"),
+        status: Joi.string().valid("UNPAID", "PAID", "INACTIVE", "ACTIVE"),
+        standard: Joi.string().optional(),
+        subjects: Joi.array().items(Joi.string()).optional(),
+        qualification: Joi.string().optional()
     })
 }), userVerify, userAuthAdmin, registerUser)
 

@@ -18,13 +18,14 @@ export const userVerify = asyncHandler(async (req, res, next) => {
             throw new ApiError({ statusCode: 401, error: "Invalid Access Token" })
         }
 
-        if (user.isActive !== true) {
+        if (user.status === "INACTIVE") {
             throw new ApiError({ statusCode: 403, error: "Inactive user" })
         }
 
         req.user = user;
         next();
     } catch (error) {
+        console.log("🚀 ~ :28 ~ error:", error);
         throw new ApiError({ statusCode: error.statusCode || 401, error: error?.message || "Invalid access token" });
     }
 });
@@ -32,7 +33,7 @@ export const userVerify = asyncHandler(async (req, res, next) => {
 export const userAuthAdmin = asyncHandler((req, res, next) => {
     const isAdmin = req.user?.role
     try {
-        if (["Admin", "Teacher"].includes(isAdmin)) {
+        if (["ADMIN", "TEACHER"].includes(isAdmin)) {
             next();
         } else {
             throw new ApiError({ statusCode: 403, error: "User have not Right to Access the Resource" })

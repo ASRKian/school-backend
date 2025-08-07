@@ -12,25 +12,24 @@ const UserRegInfo = new Schema({
     },
     fatherName: {
         type: String,
-        required: [true, "Please Enter Father's Name !"]
     },
     motherName: {
         type: String,
-        required: [true, "Please Enter Mother's Name !"]
     },
     fatherNo: {
         type: String,
-        required: [true, "Please Enter Father's Mobile Number !"]
     },
     motherNo: {
         type: String,
     },
     panCard: {
-        type: String
+        type: String,
+        length: 10,
+        uppercase: true
     },
     aadharCard: {
         type: String,
-        required: [true, "Please Enter Aadhar Card Number !"]
+        length: 12
     },
     uniqueId: {
         type: String,
