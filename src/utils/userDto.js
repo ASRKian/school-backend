@@ -32,7 +32,7 @@ export function userResponse(data) {
 
 export function userRequest(data) {
     const userType = data.role || "STUDENT";
-    const uniqueId = appendRandomChars(data.fullName);
+    const uniqueId = appendRandomChars(userType.slice(0, 4).toUpperCase(), 4);
     const requestUserReg = {
         address: data.address,
         pincode: data.pincode,
@@ -59,7 +59,6 @@ export function userRequest(data) {
         requestUser.subjects = data.subjects || [];
         requestUser.qualification = data.qualification || "Not Specified";
         requestUser.status = data.status || "INACTIVE";
-
     } else {
         requestUserReg.fatherName = data.fatherName;
         requestUserReg.motherName = data.motherName;

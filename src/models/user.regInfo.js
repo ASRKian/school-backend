@@ -40,5 +40,5 @@ const UserRegInfo = new Schema({
     },
 })
 
-const UserRegInfoModel = new model("userRegInfo", UserRegInfo);
+const UserRegInfoModel = model("userRegInfo", UserRegInfo);
 export default UserRegInfoModel;

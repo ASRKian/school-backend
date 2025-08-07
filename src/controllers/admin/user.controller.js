@@ -3,7 +3,6 @@ import User from "../../models/user.model.js"
 import bcrypt from "bcrypt"
 import { asyncHandler } from "../../utils/asyncHandler.js"
 import { ApiError } from "../../utils/ApiError.js"
-import { appendRandomChars } from "../../utils/AppendRandomChars.js"
 import jwt from 'jsonwebtoken'
 import { flattenNestedObject } from "../../utils/flattenNestedObject.js"
 import UserRegInfo from "../../models/user.regInfo.js"

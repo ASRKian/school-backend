@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 
-const userSchema = new Schema({
+const UserSchema = new Schema({
     uniqueId: {
         type: String,
         unique: true,
@@ -76,5 +76,5 @@ const userSchema = new Schema({
     }
 }, { timestamps: true });
 
-const User = new model("user", userSchema, "users");
+const User = model("user", UserSchema, "users");
 export default User;

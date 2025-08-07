@@ -5,6 +5,8 @@ import userRoutes from "./routes/admin/user.routes.js";
 import { errors } from "celebrate";
 import { ApiError } from "./utils/ApiError.js";
 import ErrorMiddleware from "./middlewares/ErrorMiddleware.js";
+import batchRoutes from "./routes/admin/batch.route.js";
+import attendanceRoutes from "./routes/admin/attendance.route.js";
 
 const app = express();
 
@@ -25,10 +27,12 @@ app.use(express.static("public"));
 
 // ADMIN panel routes
 app.use("/apiAdmin/v1/user/", userRoutes);
+app.use("/apiAdmin/v1/batch/", batchRoutes);
+app.use("/apiAdmin/v1/attendance/", attendanceRoutes);
 
 // Catch-all for undefined routes
 app.all("*", (req, res, next) => {
-    next(new ApiError(404, `Not Available Path ${req.baseUrl} !`));
+    next(new ApiError({ statusCode: 404, error: `Not Available Path ${req.baseUrl} !` }));
 });
 
 // Error handling
