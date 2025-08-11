@@ -38,7 +38,7 @@ const UserRegInfo = new Schema({
         index: true,
         required: [true, "Please Enter uniqueId !"]
     },
-})
+}, { versionKey: false })
 
 const UserRegInfoModel = model("userRegInfo", UserRegInfo);
 export default UserRegInfoModel;

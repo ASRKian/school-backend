@@ -39,8 +39,26 @@ export const getUsers = asyncHandler(async (req, res) => {
 });
 
 export const getSingleUser = asyncHandler(async (req, res) => {
-    const userId = req.params.id;
-    const user = await User.findById(userId).select("-password -updatedAt -__v").lean();
+    const uniqueId = req.params.uniqueId;
+    const user = await User.aggregate([
+        { $match: { uniqueId } },
+        { $project: { password: 0, updatedAt: 0, __v: 0 } },
+        {
+            $lookup: {
+                from: "userreginfos",
+                localField: "uniqueId",
+                foreignField: "uniqueId",
+                as: "regInfo"
+            }
+        },
+        { $unwind: { path: "$regInfo", preserveNullAndEmptyArrays: true } },
+        {
+            $project: {
+                "regInfo._id": 0,
+                "regInfo.__v": 0
+            }
+        }
+    ]);
 
     if (!user) {
         return res.status(404).json(new ApiError({ statusCode: 404, error: "User not found" }));
@@ -60,10 +78,14 @@ export const addUser = asyncHandler(async (req, res) => {
 
 export const updateUser = asyncHandler(async (req, res) => {
     try {
-        let id = req.params.id
-        await User.findByIdAndUpdate(id, {
-            $set: flattenNestedObject(req.body)
-        }, { new: true });
+        let uniqueId = req.params.uniqueId
+        const updateData = flattenNestedObject(req.body);
+
+        await Promise.all([
+            User.findOneAndUpdate({ uniqueId }, { $set: updateData }, { new: true }),
+            UserRegInfo.findOneAndUpdate({ uniqueId }, { $set: updateData }, { new: true })
+        ]);
+
 
         return res.status(200).json(new ApiResponse({ statusCode: 200, message: "User updated successfully" }));
     } catch (error) {
@@ -172,3 +194,13 @@ export const logOut = asyncHandler(async (req, res) => {
     await userInfo.save();
     res.clearCookie("refreshToken").status(200).json(new ApiResponse({ statusCode: 200, message: "User logged out successfully" }));
 });
+
+export const deleteUser = asyncHandler(async (req, res) => {
+    const uniqueId = req.params.uniqueId;
+    const deleteUser = await User.deleteOne({ uniqueId });
+    if (!deleteUser.deletedCount) {
+        throw new ApiError({ statusCode: 404, error: "Invalid user id" });
+    }
+
+    return res.status(200).send("User deleted");
+})

@@ -3,7 +3,8 @@ import { Schema, model } from "mongoose";
 const ReportSchema = new Schema({
     uniqueId: {
         type: String,
-        required: [true, "Please Enter Unique ID !"]
+        required: [true, "Please Enter Unique ID !"],
+        unique: true
     },
     examType: {
         type: String,
@@ -13,16 +14,24 @@ const ReportSchema = new Schema({
         type: String,
         required: [true, "Please Enter Batch ID !"]
     },
-    subjects: {
+    report: {
         type: Map,
         of: new Schema({
             marks: Number,
             grade: String,
             rank: Number
-        }),
+        }, { _id: false }),
         required: true
+    },
+    status: {
+        type: String,
+        enum: ["FAILED", "PASSED"]
+    },
+    studentId: {
+        type: String,
+        required: [true, "Please Enter Student ID !"]
     }
-}, { timestamps: true });
+}, { timestamps: true, versionKey: false });
 
 
 const ReportModel = model("Report", ReportSchema);

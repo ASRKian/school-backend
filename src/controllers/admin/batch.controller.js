@@ -10,7 +10,6 @@ export const getBatches = asyncHandler(async (_, res) => {
 
 export const getBatchById = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    console.log("🚀 ~ :13 ~ id:", id);
     const batch = await Batch.findById(id);
     if (!batch) {
         return res.status(404).json(new ApiError({ statusCode: 404, error: "Batch not found" }));

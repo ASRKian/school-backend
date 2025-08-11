@@ -17,7 +17,7 @@ export const modifyAttendanceSchema = addAttendanceSchema
     .or("day", "students");
 
 export const batchIdSchema = Joi.object({
-    batchId: Joi.string()
+    id: Joi.string()
         .length(24)
         .hex()
         .required()
