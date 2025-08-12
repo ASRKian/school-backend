@@ -1,13 +1,20 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import userRoutes from "./routes/admin/user.routes.js";
+import adminUserRoutes from "./routes/admin/user.route.js";
 import { errors } from "celebrate";
 import { ApiError } from "./utils/ApiError.js";
 import ErrorMiddleware from "./middlewares/ErrorMiddleware.js";
 import batchRoutes from "./routes/admin/batch.route.js";
 import attendanceRoutes from "./routes/admin/attendance.route.js";
-import reportRouter from "./routes/admin/report.route.js";
+import reportRoutes from "./routes/admin/report.route.js";
+import userRoutes from "./routes/user/user.route.js";
+import userAttendanceRoutes from "./routes/user/attendance.route.js";
+import userReportRoutes from "./routes/user/report.route.js";
+import examRoutes from "./routes/admin/exam.route.js";
+import userExamRoutes from "./routes/user/exam.route.js";
+import transactionRoutes from "./routes/user/transaction.route.js";
+import teacherAttendanceRoutes from "./routes/teacher/attendance.route.js";
 
 const app = express();
 
@@ -27,10 +34,21 @@ app.use(cookieParser());
 app.use(express.static("public"));
 
 // ADMIN panel routes
-app.use("/apiAdmin/v1/user/", userRoutes);
+app.use("/apiAdmin/v1/user/", adminUserRoutes);
 app.use("/apiAdmin/v1/batch/", batchRoutes);
 app.use("/apiAdmin/v1/attendance/", attendanceRoutes);
-app.use("/apiAdmin/v1/report/", reportRouter);
+app.use("/apiAdmin/v1/report/", reportRoutes);
+app.use("/apiAdmin/v1/exam/", examRoutes);
+
+// Teacher panel routes
+app.use("/apiTeacher/v1/attendance/", teacherAttendanceRoutes);
+
+// USER panel routes
+app.use("/apiUser/v1/user/", userRoutes);
+app.use("/apiUser/v1/attendance/", userAttendanceRoutes);
+app.use("/apiUser/v1/report/", userReportRoutes);
+app.use("/apiUser/v1/exam/", userExamRoutes);
+app.use("/apiUser/v1/transaction/", transactionRoutes);
 
 // Catch-all for undefined routes
 app.all("*", (req, res, next) => {

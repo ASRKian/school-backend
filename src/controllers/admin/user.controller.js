@@ -40,6 +40,10 @@ export const getUsers = asyncHandler(async (req, res) => {
 
 export const getSingleUser = asyncHandler(async (req, res) => {
     const uniqueId = req.params.uniqueId;
+    if (req.user.role === "STUDENT" && uniqueId !== req.user.uniqueId) {
+        throw new ApiError({ statusCode: 403, error: "Students can only access their own data" });
+    }
+
     const user = await User.aggregate([
         { $match: { uniqueId } },
         { $project: { password: 0, updatedAt: 0, __v: 0 } },

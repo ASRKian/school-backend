@@ -5,17 +5,17 @@ import { userVerify, userAuthAdmin } from "../../middlewares/userAuth.js";
 import { addUserSchema, loginUserSchema, uniqueIdSchema, updateUserSchema } from "../../validators/user.validator.js";
 const router = express.Router();
 
-router.get("/", userVerify, userAuthAdmin, getUsers);
+router.get("/", userVerify, userAuthAdmin(["ADMIN", "TEACHER"]), getUsers);
 
 router.get("/:uniqueId", celebrate({
     params: Joi.object({
         uniqueId: Joi.string().trim().required(),
     })
-}), userVerify, userAuthAdmin, getSingleUser);
+}), userVerify, userAuthAdmin(["ADMIN", "TEACHER"]), getSingleUser);
 
 router.post("/", celebrate({
     [Segments.BODY]: addUserSchema
-}), userVerify, userAuthAdmin, addUser)
+}), userVerify, userAuthAdmin(["ADMIN", "TEACHER"]), addUser)
 
 router.put("/:uniqueId", [celebrate({
     [Segments.BODY]: updateUserSchema
@@ -31,6 +31,6 @@ router.get("/logout", logOut);
 
 router.delete("/:uniqueId", celebrate({
     [Segments.PARAMS]: uniqueIdSchema,
-}), userVerify, userAuthAdmin, deleteUser);
+}), userVerify, userAuthAdmin(["ADMIN", "TEACHER"]), deleteUser);
 
 export default router;

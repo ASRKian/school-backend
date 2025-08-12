@@ -6,6 +6,10 @@ const BatchSchema = new Schema({
         type: String,
         unique: true,
         required: [true, "Please Enter Unique ID !"]
+    },
+    totalFee: {
+        type: Number,
+        required: true
     }
 }, { timestamps: true, versionKey: false });
 

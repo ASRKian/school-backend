@@ -1,7 +1,7 @@
 import { Joi } from "celebrate";
 
 export const idParamSchema = Joi.object({
-  id: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required()
+    id: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required()
 });
 
 
@@ -11,10 +11,11 @@ export const batchSchema = Joi.object({
         "string.pattern.name": "Year must be in the format YYYY-YY (e.g., 2008-09)"
     }),
     subjects: Joi.array().items(Joi.string()).required(),
-    section: Joi.string().optional()
+    section: Joi.string().optional(),
+    totalFee: Joi.number().required().positive()
 })
 
 export const batchPatchSchema = batchSchema.fork(
-    ["standard", "year", "subjects"],
+    ["subjects"],
     (field) => field.optional()
 );

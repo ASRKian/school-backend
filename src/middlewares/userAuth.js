@@ -30,16 +30,15 @@ export const userVerify = asyncHandler(async (req, res, next) => {
     }
 });
 
-export const userAuthAdmin = asyncHandler((req, res, next) => {
-    const isAdmin = req.user?.role
-    try {
-        if (["ADMIN", "TEACHER"].includes(isAdmin)) {
-            next();
-        } else {
-            throw new ApiError({ statusCode: 403, error: "User have not Right to Access the Resource" })
-        }
-    } catch (error) {
-        throw new ApiError({ statusCode: error.statusCode || 401, error: error?.message || "Invalid Access to Resource" });
-    }
-});
+export const userAuthAdmin = (allowedRoles) =>
+    asyncHandler((req, res, next) => {
+        const userRole = req.user?.role;
 
+        if (allowedRoles.includes(userRole)) {
+            return next();
+        }
+        throw new ApiError({
+            statusCode: 403,
+            error: "User does not have permission to access this resource"
+        });
+    });

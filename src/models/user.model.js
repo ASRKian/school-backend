@@ -74,7 +74,7 @@ const UserSchema = new Schema({
     qualification: {
         type: String
     }
-}, { timestamps: true });
+}, { timestamps: true, versionKey: false });
 
 const User = model("user", UserSchema, "users");
 export default User;
