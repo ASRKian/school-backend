@@ -19,17 +19,22 @@ const ReportSchema = new Schema({
         of: new Schema({
             marks: Number,
             grade: String,
-            rank: Number
+            rank: Number,
+            maxMarks: Number
         }, { _id: false }),
         required: true
     },
     status: {
         type: String,
-        enum: ["FAILED", "PASSED"]
+        enum: ["FAIL", "PASS"]
     },
     studentId: {
         type: String,
         required: [true, "Please Enter Student ID !"]
+    },
+    percentage: {
+        type: String,
+        required: true
     }
 }, { timestamps: true, versionKey: false });
 

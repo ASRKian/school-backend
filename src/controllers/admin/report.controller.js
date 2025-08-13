@@ -1,13 +1,14 @@
 import mongoose from "mongoose";
-import ReportModel from "../../models/report.model.js";
+import Report from "../../models/report.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import User from "../../models/user.model.js";
 import Exam from "../../models/exam.model.js";
+import { getGrade, getResult } from "../../utils/generateReportHelpers.js";
 
 export const addReport = asyncHandler(async (req, res) => {
-    const { examType, subjects, studentId, status, marks, grade, rank } = req.body;
+    const { examType, subjects, studentId, marks, rank } = req.body;
 
     const isValidStudent = await User.findOne({ uniqueId: studentId, role: "STUDENT" });
 
@@ -21,16 +22,33 @@ export const addReport = asyncHandler(async (req, res) => {
         throw new ApiError({ statusCode: 400, error: "exam not found for the given student" });
     }
 
-    const report = Object.fromEntries(
-        subjects.map((subject, i) => [
-            subject,
-            { marks: marks[i], grade: grade[i], rank: rank[i] }
-        ])
-    );
+    const report = {};
+    const maxMarksArray = [];
+
+    for (let i = 0; i < subjects.length; i++) {
+        const subject = subjects[i];
+        const subjectInfo = isValidExamId.subjects.get(subject);
+
+        if (!subjectInfo) {
+            throw new ApiError({ statusCode: 404, error: `Invalid subject name ${subject}` });
+        }
+
+        const grade = getGrade(marks[i], subjectInfo.maxMarks);
+
+        report[subject] = {
+            marks: marks[i],
+            grade: grade[i],
+            rank: rank[i],
+            maxMarks: subjectInfo.maxMarks
+        };
+        maxMarksArray.push(subjectInfo.maxMarks)
+    }
+
+    const { status, percentage } = getResult(marks, maxMarksArray);
 
     const batchId = isValidStudent.batch;
     const uniqueId = `${examType}|${batchId}|${studentId}`;
-    await ReportModel.create({ examType, batchId, report, studentId, uniqueId, status });
+    await Report.create({ examType, batchId, report, studentId, uniqueId, status, percentage });
     return res.status(201).json(new ApiResponse({ statusCode: 201, message: "Report added successfully" }))
 
 });
@@ -42,7 +60,7 @@ export const getReports = asyncHandler(async (req, res) => {
     if (batchId) query.batchId = batchId
     if (studentId) query.studentId = studentId;
 
-    const reports = await ReportModel.find(query).select("-examType -batchId -studentId");
+    const reports = await Report.find(query).select("-examType -batchId -studentId");
 
     if (reports.length === 0) {
         return res.status(404).json(
@@ -70,7 +88,7 @@ export const getReportById = asyncHandler(async (req, res) => {
         throw new ApiError({ statusCode: 403, error: "Students can only access their own data" })
     }
 
-    const report = await ReportModel.findOne({ uniqueId }).select("-examType -batchId -studentId");
+    const report = await Report.findOne({ uniqueId }).select("-examType -batchId -studentId");
     if (!report) {
         return res.status(404).json(new ApiResponse({ statusCode: 404, message: "Report not found" }));
     }
@@ -79,23 +97,45 @@ export const getReportById = asyncHandler(async (req, res) => {
 
 export const updateReport = asyncHandler(async (req, res) => {
     const id = req.params.id;
-    const { subjectName, newMarks, newGrade, newRank, status } = req.body;
-    await ReportModel.updateOne(
-        { _id: new mongoose.Types.ObjectId(id) },
-        {
-            $set: {
-                [`report.${subjectName}`]: { marks: newMarks, grade: newGrade, rank: newRank },
-                status
-            }
-        }
-    );
+    const { subjectName, newMarks, newRank } = req.body;
+
+    const oldReport = await Report.findById(id);
+    const isValidExamId = await Exam.findOne({ type: oldReport.examType, batchId: oldReport.batchId });
+
+    if (!isValidExamId.subjects.has(subjectName)) {
+        throw new ApiError({ statusCode: 404, error: `Invalid subject name ${subjectName}` })
+    }
+
+    const existingSubject = oldReport.report.get(subjectName);
+    if (existingSubject?.marks === newMarks && existingSubject?.rank === newRank) {
+        return res.status(304).end();
+    }
+
+    const grade = getGrade(newMarks, isValidExamId.subjects.get(subjectName).maxMarks)
+
+    oldReport.report.set(subjectName, {
+        marks: newMarks,
+        grade,
+        maxMarks: isValidExamId.subjects.get(subjectName).maxMarks,
+        rank: newRank
+    })
+    const marksArray = Array.from(oldReport.report.values()).map(s => s.marks);
+    const maxMarksArray = Array.from(oldReport.report.values()).map(s => s.maxMarks);
+
+    const isFGradeExists = Array.from(oldReport.report.values()).map(s => s.grade).includes("F");
+
+    const { percentage, status } = getResult(marksArray, maxMarksArray)
+
+    oldReport.status = isFGradeExists ? "FAIL" : status;
+    oldReport.percentage = percentage;
+    await oldReport.save();
 
     return res.status(204).end();
 });
 
 export const deleteReport = asyncHandler(async (req, res) => {
     const id = req.params.id;
-    const report = await ReportModel.findByIdAndDelete(id);
+    const report = await Report.findByIdAndDelete(id);
     if (!report) {
         return res.status(404).json(new ApiResponse({ statusCode: 404, message: "Report not found" }));
     }
