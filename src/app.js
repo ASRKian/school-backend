@@ -15,6 +15,8 @@ import examRoutes from "./routes/admin/exam.route.js";
 import userExamRoutes from "./routes/user/exam.route.js";
 import transactionRoutes from "./routes/user/transaction.route.js";
 import teacherAttendanceRoutes from "./routes/teacher/attendance.route.js";
+import subjectsTimeTableRoutes from "./routes/admin/subjects.timetable.route.js";
+import userSubjectsTimeTableRoutes from "./routes/user/subjects.timetable.route.js";
 
 const app = express();
 
@@ -39,6 +41,7 @@ app.use("/apiAdmin/v1/batch/", batchRoutes);
 app.use("/apiAdmin/v1/attendance/", attendanceRoutes);
 app.use("/apiAdmin/v1/report/", reportRoutes);
 app.use("/apiAdmin/v1/exam/", examRoutes);
+app.use("/apiAdmin/v1/subjects-timetable/", subjectsTimeTableRoutes);
 
 // Teacher panel routes
 app.use("/apiTeacher/v1/attendance/", teacherAttendanceRoutes);
@@ -49,6 +52,7 @@ app.use("/apiUser/v1/attendance/", userAttendanceRoutes);
 app.use("/apiUser/v1/report/", userReportRoutes);
 app.use("/apiUser/v1/exam/", userExamRoutes);
 app.use("/apiUser/v1/transaction/", transactionRoutes);
+app.use("/apiUser/v1/subjects-timetable/", userSubjectsTimeTableRoutes);
 
 // Catch-all for undefined routes
 app.all("*", (req, res, next) => {

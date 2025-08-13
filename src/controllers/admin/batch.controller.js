@@ -9,8 +9,26 @@ import Attendance from "../../models/attendance.model.js";
 import Report from "../../models/report.model.js";
 
 export const getBatches = asyncHandler(async (_, res) => {
-    const batches = await Batch.find().select("-createdAt -updatedAt");
-    return res.status(200).json(new ApiResponse({ statusCode: 200, data: batches, message: "Batches fetched successfully" }));
+    const batches = await Batch.find().select("-createdAt -updatedAt -subjects -totalFee");
+
+    const data = {};
+
+    batches.forEach(batch => {
+        const splittedData = batch.uniqueId.split(":");
+        const year = splittedData?.[1];
+
+        const stdSec = splittedData?.[0] || "";
+        const standard = stdSec.slice(0, stdSec.length - 1);
+        const section = stdSec.slice(stdSec.length - 1);
+
+        if (!data[year]) data[year] = {};
+
+        if (!data[year][standard]) data[year][standard] = [];
+
+        data[year][standard].push({ [section]: batch._id });
+    });
+
+    return res.status(200).json(new ApiResponse({ statusCode: 200, data, message: "Batches fetched successfully" }));
 });
 
 export const getBatchById = asyncHandler(async (req, res) => {

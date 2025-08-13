@@ -64,13 +64,28 @@ export const me = asyncHandler(async (req, res) => {
                 as: "regInfo"
             }
         },
+        {
+            $lookup: {
+                from: "batches",
+                localField: "batch",
+                foreignField: "uniqueId",
+                as: "batch"
+            }
+        },
         { $unwind: { path: "$regInfo", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$batch", preserveNullAndEmptyArrays: true } },
         {
             $project: {
+                "batch._id": 0,
+                "batch.__v": 0,
+                "batch.createdAt": 0,
+                "batch.updatedAt": 0,
                 "regInfo._id": 0,
-                "regInfo.__v": 0
+                "regInfo.__v": 0,
+                "regInfo.uniqueId": 0,
+                "subjects": 0
             }
-        }
+        },
     ]);
 
     if (!user) {

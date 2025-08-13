@@ -29,11 +29,15 @@ const generateAccessAndRefreshTokens = async (uniqueId, type) => {
 }
 
 export const getUsers = asyncHandler(async (req, res) => {
-    const type = req.query.type;
+    const { type, batchId } = req.query;
     if (!["ADMIN", "TEACHER", "STUDENT"].includes(type)) {
         return res.status(404).json(new ApiError({ statusCode: 404, error: "available types: ['ADMIN', 'TEACHER', 'STUDENT'] " }));
     }
-    const users = await User.find({ role: type }).select("-password -__v -updatedAt").lean() || [];
+
+    const query = { role: type }
+    if (batchId) query.batch = batchId;
+
+    const users = await User.find(query).select("-password -__v -updatedAt").lean() || [];
     return res.status(200).json(new ApiResponse({ statusCode: 200, data: users, message: "Users fetched successfully" }));
 
 });

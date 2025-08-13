@@ -10,7 +10,7 @@ export const getExams = asyncHandler(async (req, res) => {
 
     const upcomingExams = await Exam.find(query);
     if (!upcomingExams.length) {
-        throw new ApiError({ statusCode: 400, error: `No exams found of exam type: ${examType}` })
+        throw new ApiError({ statusCode: 400, error: `No upcoming exams found` })
     }
 
     return res.json(new ApiResponse({ statusCode: 200, data: upcomingExams }));
