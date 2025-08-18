@@ -37,7 +37,7 @@ export const addReport = asyncHandler(async (req, res) => {
 
         report[subject] = {
             marks: marks[i],
-            grade: grade[i],
+            grade,
             rank: rank[i],
             maxMarks: subjectInfo.maxMarks
         };

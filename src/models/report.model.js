@@ -17,10 +17,24 @@ const ReportSchema = new Schema({
     report: {
         type: Map,
         of: new Schema({
-            marks: Number,
-            grade: String,
-            rank: Number,
-            maxMarks: Number
+            marks: {
+                type: Number,
+                required: true
+            },
+            grade: {
+                type: String,
+                enum: ["A+", "A", "B+", "B", "C", "D", "E", "F"],
+                required: true
+            },
+            rank: {
+                type: Number,
+                required: true,
+                min: 1
+            },
+            maxMarks: {
+                type: Number,
+                required: true
+            }
         }, { _id: false }),
         required: true
     },
@@ -33,7 +47,7 @@ const ReportSchema = new Schema({
         required: [true, "Please Enter Student ID !"]
     },
     percentage: {
-        type: String,
+        type: Number,
         required: true
     }
 }, { timestamps: true, versionKey: false });

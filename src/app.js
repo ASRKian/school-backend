@@ -17,6 +17,7 @@ import transactionRoutes from "./routes/user/transaction.route.js";
 import teacherAttendanceRoutes from "./routes/teacher/attendance.route.js";
 import subjectsTimeTableRoutes from "./routes/admin/subjects.timetable.route.js";
 import userSubjectsTimeTableRoutes from "./routes/user/subjects.timetable.route.js";
+import transactionRouter from "./routes/admin/transaction.route.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use("/apiAdmin/v1/attendance/", attendanceRoutes);
 app.use("/apiAdmin/v1/report/", reportRoutes);
 app.use("/apiAdmin/v1/exam/", examRoutes);
 app.use("/apiAdmin/v1/subjects-timetable/", subjectsTimeTableRoutes);
+app.use("/apiAdmin/v1/transaction/", transactionRouter);
 
 // Teacher panel routes
 app.use("/apiTeacher/v1/attendance/", teacherAttendanceRoutes);

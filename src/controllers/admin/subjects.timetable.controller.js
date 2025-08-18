@@ -1,9 +1,34 @@
+import Batch from "../../models/batch.model.js";
 import SubjectsTimetable from "../../models/subjects.timetable.model.js";
+import User from "../../models/user.model.js";
+import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
 export const addTimetable = asyncHandler(async (req, res) => {
     const { batchId, days } = req.body;
+
+    const validBatchId = await Batch.findOne({ uniqueId: batchId });
+
+    if (!validBatchId) {
+        throw new ApiError({ statusCode: 400, error: "Invalid batch Id" });
+    }
+
+    const teacherSet = new Set();
+
+    for (const element of days) {
+        for (const period of element.periods) {
+            teacherSet.add(period.teacher)
+        }
+    }
+
+    const teacherArray = Array.from(teacherSet);
+
+    const validTeachers = await User.find({ uniqueId: { $in: teacherArray } });
+
+    if (validTeachers.length !== teacherArray.length) {
+        throw new ApiError({ statusCode: 400, error: "Invalid teacher Ids" });
+    }
 
     await SubjectsTimetable.create({ batchId, days });
     return res.status(201).json(new ApiResponse({ statusCode: 201, message: "timetable added successfully" }));
