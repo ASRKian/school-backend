@@ -23,6 +23,10 @@ const ExamSchema = new Schema({
             maxMarks: { type: Number, required: true }
         }, { _id: false }),
         required: [true, "Subjects are required !"]
+    },
+    startDate: {
+        type: Date,
+        required: [true, "Please enter exam start date !"]
     }
 }, { timestamps: true, versionKey: false });
 

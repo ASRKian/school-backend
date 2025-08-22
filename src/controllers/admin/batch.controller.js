@@ -8,6 +8,13 @@ import Exam from "../../models/exam.model.js";
 import Attendance from "../../models/attendance.model.js";
 import Report from "../../models/report.model.js";
 
+function getMongooseObjectId(objectId) {
+    if (!mongoose.isValidObjectId(objectId)) {
+        throw new ApiError({ statusCode: 404, error: "not a valid object id" });
+    }
+    return mongoose.Types.ObjectId.createFromHexString(objectId);
+}
+
 export const getBatches = asyncHandler(async (_, res) => {
     const batches = await Batch.find().select("-createdAt -updatedAt -subjects -totalFee");
 
@@ -33,7 +40,48 @@ export const getBatches = asyncHandler(async (_, res) => {
 
 export const getBatchById = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const batch = await Batch.findById(id);
+
+    const pipeline = [
+        {
+            $match: {
+                _id: getMongooseObjectId(id)
+            }
+        },
+        {
+            $lookup: {
+                from: "exams",
+                localField: "uniqueId",
+                foreignField: "batchId",
+                as: "exams"
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "uniqueId",
+                foreignField: "batch",
+                as: "students"
+            }
+        },
+        {
+            $project: {
+                "exams._id": 1,
+                "exams.type": 1,
+                "exams.status": 1,
+                "students.uniqueId": 1,
+                "students.fullName": 1,
+                "students.avatar": 1,
+                "students.amountPaid": 1,
+                "students.amountDue": 1,
+                "subjects": 1,
+                "uniqueId": 1,
+                "totalFee": 1
+
+            }
+        },
+    ]
+
+    const batch = await Batch.aggregate(pipeline);
     if (!batch) {
         return res.status(404).json(new ApiError({ statusCode: 404, error: "Batch not found" }));
     }
