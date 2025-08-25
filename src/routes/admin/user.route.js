@@ -19,7 +19,7 @@ router.post("/", celebrate({
 
 router.put("/:uniqueId", [celebrate({
     [Segments.BODY]: updateUserSchema
-}), userVerify, userAuthAdmin], updateUser)
+}), userVerify, userAuthAdmin(["ADMIN", "TEACHER"])], updateUser)
 
 router.post("/login", celebrate({
     [Segments.BODY]: loginUserSchema

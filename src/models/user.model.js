@@ -73,6 +73,9 @@ const UserSchema = new Schema({
     },
     qualification: {
         type: String
+    },
+    installments: {
+        type: Number
     }
 }, { timestamps: true, versionKey: false });
 

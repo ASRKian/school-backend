@@ -26,6 +26,7 @@ export function userResponse(data) {
         response.amountDue = data.amountDue;
         response.amountPaid = data.amountPaid;
         response.standard = data.standard;
+        response.installments = data.installments;
     }
     return response;
 }
@@ -72,6 +73,7 @@ export function userRequest(data) {
         requestUser.standard = data.standard;
         requestUser.status = data.status || "UNPAID";
         requestUser.standard = data.standard || "Not Specified";
+        requestUser.installments = data.installments;
     }
 
     return { requestUser, requestUserReg };

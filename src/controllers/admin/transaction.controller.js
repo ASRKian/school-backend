@@ -26,7 +26,7 @@ export const updateTransactionStatus = asyncHandler(async (req, res) => {
 
         transaction.status = status;
         if (bankRrn) transaction.bankRrn = bankRrn;
-        transaction.save({ session })
+        await transaction.save({ session })
         await session.commitTransaction();
 
         return res.json(new ApiResponse({ statusCode: 200, message: "Transaction status updated successfully" }));

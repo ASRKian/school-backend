@@ -24,7 +24,8 @@ export const addUserSchema = Joi.object({
     status: Joi.string().valid("UNPAID", "PAID", "INACTIVE", "ACTIVE"),
     standard: Joi.string().optional(),
     subjects: Joi.array().items(Joi.string()).optional(),
-    qualification: Joi.string().optional()
+    qualification: Joi.string().optional(),
+    installments: Joi.number().optional()
 });
 
 export const updateUserSchema = addUserSchema

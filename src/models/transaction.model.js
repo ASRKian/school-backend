@@ -32,6 +32,13 @@ const TransactionSchema = new Schema({
     },
     paymentUrl: {
         type: String
+    },
+    coupon: {
+        type: String
+    },
+    discount: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true, versionKey: false })
 
